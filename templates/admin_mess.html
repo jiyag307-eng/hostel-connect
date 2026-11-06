@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Mess Schedule - HostelSphere Admin{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1>🍲 Mess Menu Management</h1>
+    <p style="color: var(--text-muted); margin: 0;">
+      Configure meals, serving timings, and culinary notes for the weekly student dining schedule.
+    </p>
+  </div>
+  <a href="{{ url_for('mess_menu', day=selected_day) }}" class="btn btn-outline" target="_blank">
+    👁️ Student View
+  </a>
+</div>
+
+<!-- Day Selector Tabs -->
+<div class="day-tabs">
+  {% for day in days_of_week %}
+    <a href="{{ url_for('admin_mess', day=day) }}" 
+       class="day-tab {% if selected_day == day %}active{% endif %}">
+      {{ day }}
+    </a>
+  {% endfor %}
+</div>
+
+<!-- Meal Editors for Selected Day -->
+<div class="grid grid-cols-2" style="margin-bottom: 2rem;">
+  {% set meals_dict = {} %}
+  {% for m in meals %}
+    {% set _ = meals_dict.update({m.meal_type: m}) %}
+  {% endfor %}
+
+  {% for m_type in ['Breakfast', 'Lunch', 'Snacks', 'Dinner'] %}
+    {% set meal_data = meals_dict.get(m_type) %}
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <span class="meal-badge meal-{{ m_type|lower }}">{{ m_type }}</span>
+          <span style="font-size: 1rem;">{{ selected_day }}</span>
+        </div>
+      </div>
+
+      <form method="POST" action="{{ url_for('admin_mess', day=selected_day) }}">
+        <input type="hidden" name="day_of_week" value="{{ selected_day }}">
+        <input type="hidden" name="meal_type" value="{{ m_type }}">
+
+        <div class="form-group">
+          <label class="form-label">Serving Timings *</label>
+          <input type="text" name="timings" class="form-control" 
+                 value="{{ meal_data.timings if meal_data else ('07:30 AM - 09:30 AM' if m_type == 'Breakfast' else ('12:30 PM - 02:30 PM' if m_type == 'Lunch' else ('05:00 PM - 06:15 PM' if m_type == 'Snacks' else '07:45 PM - 09:45 PM'))) }}" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Menu Items (Dishes) *</label>
+          <textarea name="items" class="form-control" rows="3" 
+                    placeholder="e.g. Rajma Masala, Steamed Rice, Tawa Roti, Mix Veg Dry, Boondi Raita..." required>{{ meal_data.items if meal_data else '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Special Note / Chef Recommendation (Optional)</label>
+          <input type="text" name="special_note" class="form-control" 
+                 value="{{ meal_data.special_note if meal_data else '' }}" placeholder="e.g. Special Punjabi style / Sweet dish included">
+        </div>
+
+        <button type="submit" class="btn btn-sm btn-primary" style="width: 100%;">
+          Save {{ m_type }} Menu
+        </button>
+      </form>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

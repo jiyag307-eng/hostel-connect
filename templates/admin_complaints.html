@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Maintenance Management - HostelSphere Admin{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1>🛠️ Maintenance & Complaint Desk</h1>
+    <p style="color: var(--text-muted); margin: 0;">
+      Review reported tickets, assign repair personnel, update status, and communicate resolution notes.
+    </p>
+  </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="card" style="padding: 1rem; margin-bottom: 1.5rem;">
+  <form method="GET" action="{{ url_for('admin_complaints') }}" style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+      <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Status:</span>
+      {% for s in ['All', 'Pending', 'In Progress', 'Resolved', 'Rejected'] %}
+        <a href="{{ url_for('admin_complaints', status=s, category=selected_category) }}" 
+           class="btn btn-sm {% if selected_status == s %}btn-primary{% else %}btn-secondary{% endif %}">
+          {{ s }}
+        </a>
+      {% endfor %}
+    </div>
+
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Category:</span>
+      <select name="category" class="form-select" onchange="this.form.submit()" style="width: auto;">
+        {% for cat in ['All', 'Plumbing', 'Electrical', 'WiFi', 'Furniture', 'Cleanliness', 'Other'] %}
+          <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+      <input type="hidden" name="status" value="{{ selected_status }}">
+    </div>
+  </form>
+</div>
+
+<!-- Complaints Grid / Table -->
+<div class="card">
+  {% if complaints %}
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      {% for c in complaints %}
+        <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; background: white; box-shadow: var(--shadow-sm);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; gap: 1rem; flex-wrap: wrap;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
+                <h3 style="font-size: 1.15rem; margin: 0;">#{{ c.id }} - {{ c.title }}</h3>
+                <span class="badge badge-{{ c.status|lower|replace(' ', '-') }}">{{ c.status }}</span>
+                <span class="badge badge-priority-{{ c.priority|lower }}">Priority: {{ c.priority }}</span>
+              </div>
+              <div style="font-size: 0.85rem; color: var(--text-muted);">
+                Reported by <strong>{{ c.student_name }}</strong> (Roll: {{ c.roll_number }}) &bull; Phone: <a href="tel:{{ c.student_phone }}">{{ c.student_phone or 'N/A' }}</a> &bull; 📍 Room: <strong>{{ c.room_number or 'Common Area' }}</strong> &bull; 📂 {{ c.category }} &bull; {{ c.created_at|format_datetime }}
+              </div>
+            </div>
+          </div>
+
+          <p style="font-size: 0.925rem; color: #334155; margin-bottom: 1rem; background: #f8fafc; padding: 0.85rem; border-radius: var(--radius-sm); border-left: 3px solid #cbd5e1;">
+            {{ c.description }}
+          </p>
+
+          <!-- Status & Resolution Update Form -->
+          <form method="POST" action="{{ url_for('admin_update_complaint', complaint_id=c.id) }}" style="background: #fafafa; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+            <div class="grid grid-cols-3" style="align-items: flex-end; gap: 1rem;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Update Status</label>
+                <select name="status" class="form-select">
+                  <option value="Pending" {% if c.status == 'Pending' %}selected{% endif %}>Pending</option>
+                  <option value="In Progress" {% if c.status == 'In Progress' %}selected{% endif %}>In Progress (Assigned)</option>
+                  <option value="Resolved" {% if c.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                  <option value="Rejected" {% if c.status == 'Rejected' %}selected{% endif %}>Rejected / Invalid</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Resolution Note / Staff Assigned</label>
+                <input type="text" name="admin_remarks" class="form-control" 
+                       value="{{ c.admin_remarks or '' }}" placeholder="e.g. Electrician Ramu dispatched, repair scheduled.">
+              </div>
+
+              <div>
+                <button type="submit" class="btn btn-sm btn-primary" style="width: 100%; height: 38px;">
+                  Update Ticket #{{ c.id }}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p style="text-align: center; color: var(--text-muted); padding: 3rem 0; margin: 0;">
+      No maintenance complaints found matching the criteria.
+    </p>
+  {% endif %}
+</div>
+{% endblock %}

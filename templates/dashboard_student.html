@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Dashboard - HostelSphere{% endblock %}
+
+{% block content %}
+<!-- Welcome Header -->
+<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.85rem; margin-bottom: 0.25rem;">Welcome back, {{ current_user.full_name }}! 👋</h1>
+    <p style="color: var(--text-muted); margin: 0; font-size: 0.95rem;">
+      Roll No: <strong>{{ current_user.username }}</strong> &bull; {{ current_user.branch }} (Sem {{ current_user.semester }})
+    </p>
+  </div>
+  <div style="display: flex; gap: 0.75rem;">
+    <a href="{{ url_for('student_complaints') }}" class="btn btn-secondary">🛠️ Raise Complaint</a>
+    <a href="{{ url_for('student_outpass') }}" class="btn btn-primary">🎫 Request Outpass</a>
+  </div>
+</div>
+
+<!-- Overview Stats Row -->
+<div class="grid grid-cols-4" style="margin-bottom: 2rem;">
+  <!-- Room Allotment Box -->
+  <div class="stat-card">
+    <div class="stat-icon blue">🛏️</div>
+    <div>
+      <div class="stat-val">
+        {% if allotment %}{{ allotment.room_number }}{% else %}Unallotted{% endif %}
+      </div>
+      <div class="stat-lbl">
+        {% if allotment %}{{ allotment.block }} &bull; Bed #{{ allotment.bed_number }}{% else %}Contact Admin Office{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Outpass Box -->
+  <div class="stat-card">
+    <div class="stat-icon purple">🎫</div>
+    <div>
+      <div class="stat-val">{{ recent_outpasses|length }}</div>
+      <div class="stat-lbl">Outpass Applications</div>
+    </div>
+  </div>
+
+  <!-- Active Complaints Box -->
+  <div class="stat-card">
+    <div class="stat-icon amber">🛠️</div>
+    <div>
+      <div class="stat-val">{{ recent_complaints|length }}</div>
+      <div class="stat-lbl">Maintenance Tickets</div>
+    </div>
+  </div>
+
+  <!-- Today's Mess Box -->
+  <div class="stat-card">
+    <div class="stat-icon green">🍲</div>
+    <div>
+      <div class="stat-val" style="font-size: 1.25rem;">{{ today }}</div>
+      <div class="stat-lbl">{{ today_meals|length }} Meals Scheduled</div>
+    </div>
+  </div>
+</div>
+
+<!-- Two-Column Layout -->
+<div class="grid grid-cols-2" style="margin-bottom: 2rem;">
+  <!-- Left Column: Room & Roommates -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <span>🛏️</span>
+        <span>My Room & Roommates</span>
+      </div>
+      <a href="{{ url_for('student_room') }}" class="btn btn-sm btn-outline">Details &rarr;</a>
+    </div>
+
+    {% if allotment %}
+      <div style="margin-bottom: 1.25rem; padding: 1rem; background: #f8fafc; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <h3 style="font-size: 1.25rem; margin: 0; color: var(--primary);">Room {{ allotment.room_number }}</h3>
+          <span class="badge badge-available">{{ allotment.room_type }}</span>
+        </div>
+        <p style="margin: 0; font-size: 0.875rem; color: #475569;">
+          {{ allotment.block }}, Floor {{ allotment.floor }} &bull; Your Allotted Bed: <strong>Bed #{{ allotment.bed_number }}</strong>
+        </p>
+      </div>
+
+      <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Allotted Roommates:</h4>
+      {% if roommates %}
+        <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+          {% for r in roommates %}
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.85rem; background: white; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+              <div>
+                <strong>{{ r.full_name }}</strong>
+                <div style="font-size: 0.775rem; color: var(--text-muted);">
+                  Roll: {{ r.username }} &bull; Bed #{{ r.bed_number }}
+                </div>
+              </div>
+              <span style="font-size: 0.85rem; color: var(--secondary);">📞 {{ r.phone or 'N/A' }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0;">No other roommates assigned to this room yet.</p>
+      {% endif %}
+    {% else %}
+      <div style="text-align: center; padding: 2rem 1rem;">
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">You do not currently have an active room allotment.</p>
+        <span class="badge badge-pending">Pending Warden Assignment</span>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Right Column: Today's Mess Meals -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <span>🍲</span>
+        <span>Today's Mess Menu ({{ today }})</span>
+      </div>
+      <a href="{{ url_for('mess_menu') }}" class="btn btn-sm btn-outline">Full Schedule &rarr;</a>
+    </div>
+
+    {% if today_meals %}
+      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        {% for meal in today_meals %}
+          <div style="padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: #fafafa;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+              <span class="meal-badge meal-{{ meal.meal_type|lower }}">{{ meal.meal_type }}</span>
+              <span style="font-size: 0.775rem; color: var(--text-muted);">⏰ {{ meal.timings }}</span>
+            </div>
+            <div style="font-size: 0.9rem; font-weight: 500; color: #1e293b;">{{ meal.items }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">No mess schedule found for today.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Bottom Section: My Outpasses and Complaints -->
+<div class="grid grid-cols-2">
+  <!-- My Complaints -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <span>🛠️</span>
+        <span>Recent Complaints</span>
+      </div>
+      <a href="{{ url_for('student_complaints') }}" class="btn btn-sm btn-primary">+ Lodge Complaint</a>
+    </div>
+
+    {% if recent_complaints %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Priority</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in recent_complaints %}
+              <tr>
+                <td>
+                  <strong>{{ c.title }}</strong>
+                  {% if c.admin_remarks %}
+                    <div style="font-size: 0.75rem; color: var(--primary);">Note: {{ c.admin_remarks }}</div>
+                  {% endif %}
+                </td>
+                <td>{{ c.category }}</td>
+                <td><span class="badge badge-priority-{{ c.priority|lower }}">{{ c.priority }}</span></td>
+                <td><span class="badge badge-{{ c.status|lower|replace(' ', '-') }}">{{ c.status }}</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); text-align: center; padding: 2rem 0; margin: 0;">
+        No complaints filed. Everything looking good! 👍
+      </p>
+    {% endif %}
+  </div>
+
+  <!-- My Outpass Applications -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <span>🎫</span>
+        <span>Gate Outpasses</span>
+      </div>
+      <a href="{{ url_for('student_outpass') }}" class="btn btn-sm btn-primary">+ Apply Outpass</a>
+    </div>
+
+    {% if recent_outpasses %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Destination</th>
+              <th>Departure</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in recent_outpasses %}
+              <tr>
+                <td>
+                  <strong>{{ o.destination }}</strong>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">{{ o.reason }}</div>
+                </td>
+                <td style="font-size: 0.8rem; white-space: nowrap;">
+                  {{ o.departure_time|format_datetime('%d %b, %I:%M %p') }}
+                </td>
+                <td><span class="badge badge-{{ o.status|lower }}">{{ o.status }}</span></td>
+                <td>
+                  {% if o.status == 'Approved' %}
+                    <a href="{{ url_for('view_gate_pass', outpass_id=o.id) }}" class="btn btn-sm btn-success" target="_blank">
+                      📄 View Pass
+                    </a>
+                  {% else %}
+                    <span style="font-size: 0.775rem; color: var(--text-muted);">{{ o.status }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); text-align: center; padding: 2rem 0; margin: 0;">
+        No outpass applications submitted yet.
+      </p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

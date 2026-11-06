@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}HostelSphere - Smart Hostel Management Portal{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-banner">
+  <div class="hero-content">
+    <span class="badge" style="background: rgba(255,255,255,0.15); color: #93c5fd; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.2);">
+      ✨ Centralized Hostel Operations & Student Services
+    </span>
+    <h1 class="hero-title">Transparent, Connected & Smart Hostel Living</h1>
+    <p class="hero-subtitle">
+      Say goodbye to scattered WhatsApp groups and outdated notice boards. Manage room allotments, track maintenance complaints in real-time, inspect daily mess menus, and apply for gate outpasses—all in one unified platform.
+    </p>
+
+    <div class="hero-actions">
+      {% if current_user %}
+        {% if current_user.role == 'student' %}
+          <a href="{{ url_for('student_dashboard') }}" class="btn btn-primary btn-lg">Go to Student Dashboard &rarr;</a>
+          <a href="{{ url_for('student_complaints') }}" class="btn btn-secondary btn-lg">Raise Complaint</a>
+        {% else %}
+          <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary btn-lg">Open Warden Portal &rarr;</a>
+          <a href="{{ url_for('admin_outpass') }}" class="btn btn-secondary btn-lg">Review Outpasses</a>
+        {% endif %}
+      {% else %}
+        <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">Resident / Staff Login</a>
+        <a href="{{ url_for('register') }}" class="btn btn-secondary btn-lg">New Student Registration</a>
+        <a href="{{ url_for('notices') }}" class="btn btn-outline btn-lg" style="color: white; border-color: rgba(255,255,255,0.4);">View Notice Board</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- Demo Credentials Helper Box (Great for Capstone Review) -->
+{% if not current_user %}
+<div class="card" style="border-left: 4px solid var(--primary); background: #f8fafc; margin-bottom: 2rem;">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h4 style="margin-bottom: 0.25rem;">🔑 Demonstration Accounts</h4>
+      <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">
+        Click either account to quickly sign in or test credentials:
+      </p>
+    </div>
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <a href="{{ url_for('login') }}" class="btn btn-sm btn-secondary" style="font-family: monospace;">
+        <strong>Admin:</strong> admin / admin123
+      </a>
+      <a href="{{ url_for('login') }}" class="btn btn-sm btn-secondary" style="font-family: monospace;">
+        <strong>Student:</strong> 25001003043 / student123
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Key Metrics Grid -->
+<div class="grid grid-cols-3" style="margin-bottom: 2.5rem;">
+  <div class="stat-card">
+    <div class="stat-icon blue">🏢</div>
+    <div>
+      <div class="stat-val">{{ stats.total_rooms }}</div>
+      <div class="stat-lbl">Hostel Rooms Managed</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon purple">🎓</div>
+    <div>
+      <div class="stat-val">{{ stats.total_students }}</div>
+      <div class="stat-lbl">Registered Residents</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon green">✅</div>
+    <div>
+      <div class="stat-val">{{ stats.resolved_complaints }}</div>
+      <div class="stat-lbl">Maintenance Tickets Resolved</div>
+    </div>
+  </div>
+</div>
+
+<!-- Two Column Main Content: Today's Mess & Pinned Notices -->
+<div class="grid grid-cols-2" style="margin-bottom: 2rem;">
+  <!-- Today's Mess Menu Widget -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <span>🍲</span>
+        <span>Today's Mess Schedule ({{ today }})</span>
+      </div>
+      <a href="{{ url_for('mess_menu') }}" class="btn btn-sm btn-outline">Full Week Menu &rarr;</a>
+    </div>
+
+    {% if today_meals %}
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for meal in today_meals %}
+          <div style="padding: 0.85rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: #fafafa;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+              <span class="meal-badge meal-{{ meal.meal_type|lower }}">{{ meal.meal_type }}</span>
+              <span style="font-size: 0.775rem; color: var(--text-muted); font-weight: 600;">⏰ {{ meal.timings }}</span>
+            </div>
+            <p style="font-size: 0.925rem; font-weight: 500; margin: 0; color: #1e293b;">
+              {{ meal.items }}
+            </p>
+            {% if meal.special_note %}
+              <small style="color: var(--primary); font-size: 0.775rem;">ℹ️ {{ meal.special_note }}</small>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">No mess schedule found for today.</p>
+    {% endif %}
+  </div>
+
+  <!-- Recent Notices Widget -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <span>📢</span>
+        <span>Hostel Announcements</span>
+      </div>
+      <a href="{{ url_for('notices') }}" class="btn btn-sm btn-outline">All Notices &rarr;</a>
+    </div>
+
+    {% if notices %}
+      <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+        {% for notice in notices %}
+          <div style="padding: 0.85rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); {% if notice.is_pinned %}background: #fbfcfe; border-left: 3px solid var(--primary);{% endif %}">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.35rem;">
+              <h4 style="font-size: 0.975rem; font-weight: 700; margin: 0;">
+                {% if notice.is_pinned %}📌 {% endif %}{{ notice.title }}
+              </h4>
+              <span class="badge badge-cat-{{ notice.category|lower }}">{{ notice.category }}</span>
+            </div>
+            <p style="font-size: 0.85rem; color: #475569; margin-bottom: 0.4rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              {{ notice.content }}
+            </p>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">
+              Published {{ notice.created_at|time_ago }} by {{ notice.author_name }}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">No announcements posted currently.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Features Overview / Project Highlights -->
+<div class="card" style="padding: 2.25rem;">
+  <div style="text-align: center; max-width: 650px; margin: 0 auto 2rem auto;">
+    <h2 style="margin-bottom: 0.5rem;">Engineered for Real-World Campus Living</h2>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">
+      Modular role-based architecture bridging students and hostel administration seamlessly.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-4">
+    <div style="text-align: center; padding: 1rem;">
+      <div style="font-size: 2.25rem; margin-bottom: 0.75rem;">🛏️</div>
+      <h4>Room Allotments</h4>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">
+        Instant bed allocation, room specifications, and verified roommate directories.
+      </p>
+    </div>
+
+    <div style="text-align: center; padding: 1rem;">
+      <div style="font-size: 2.25rem; margin-bottom: 0.75rem;">🛠️</div>
+      <h4>Maintenance Desk</h4>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">
+        Categorized complaints with priority tagging, status tracking, and admin remarks.
+      </p>
+    </div>
+
+    <div style="text-align: center; padding: 1rem;">
+      <div style="font-size: 2.25rem; margin-bottom: 0.75rem;">🎫</div>
+      <h4>Digital Gate Pass</h4>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">
+        Paperless outpass requests with warden verification and printable checkpoint pass.
+      </p>
+    </div>
+
+    <div style="text-align: center; padding: 1rem;">
+      <div style="font-size: 2.25rem; margin-bottom: 0.75rem;">🍽️</div>
+      <h4>Weekly Mess Menu</h4>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">
+        Interactive 7-day breakfast, lunch, snacks, and dinner schedules with timing alerts.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

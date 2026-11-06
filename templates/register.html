@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Resident Registration - HostelSphere{% endblock %}
+
+{% block content %}
+<div style="max-width: 680px; margin: 1.5rem auto;">
+  <div class="card" style="padding: 2.25rem;">
+    <div style="margin-bottom: 1.75rem;">
+      <h2 style="margin-bottom: 0.35rem;">Resident Student Registration</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Fill in your official university and guardian credentials to set up your hostel resident account.
+      </p>
+    </div>
+
+    <form method="POST" action="{{ url_for('register') }}">
+      <div class="grid grid-cols-2">
+        <div class="form-group">
+          <label class="form-label" for="username">University Roll Number *</label>
+          <input type="text" id="username" name="username" class="form-control" 
+                 placeholder="e.g. 25001003050" value="{{ form.username if form else '' }}" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="full_name">Full Name *</label>
+          <input type="text" id="full_name" name="full_name" class="form-control" 
+                 placeholder="e.g. Aman Verma" value="{{ form.full_name if form else '' }}" required>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2">
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address *</label>
+          <input type="email" id="email" name="email" class="form-control" 
+                 placeholder="e.g. aman@hostel.edu" value="{{ form.email if form else '' }}" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="phone">Student Mobile Number</label>
+          <input type="tel" id="phone" name="phone" class="form-control" 
+                 placeholder="+91 98765 00000" value="{{ form.phone if form else '' }}">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3">
+        <div class="form-group">
+          <label class="form-label" for="branch">Engineering Branch</label>
+          <input type="text" id="branch" name="branch" class="form-control" 
+                 placeholder="e.g. Computer Engineering" value="{{ form.branch if form else '' }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="semester">Semester</label>
+          <select id="semester" name="semester" class="form-select">
+            {% for s in range(1, 9) %}
+              <option value="{{ s }}" {% if form and form.semester == s|string %}selected{% elif s == 3 %}selected{% endif %}>
+                Semester {{ s }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="gender">Gender</label>
+          <select id="gender" name="gender" class="form-select">
+            <option value="Male" {% if form and form.gender == 'Male' %}selected{% endif %}>Male</option>
+            <option value="Female" {% if form and form.gender == 'Female' %}selected{% endif %}>Female</option>
+            <option value="Other" {% if form and form.gender == 'Other' %}selected{% endif %}>Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.25rem;">
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem; color: #334155;">Guardian Verification Info (For Gate Outpass)</h4>
+        <div class="grid grid-cols-2" style="margin-bottom: 0;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="guardian_name">Parent / Guardian Name</label>
+            <input type="text" id="guardian_name" name="guardian_name" class="form-control" 
+                   placeholder="e.g. Ramesh Verma" value="{{ form.guardian_name if form else '' }}">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="guardian_phone">Guardian Contact Number</label>
+            <input type="tel" id="guardian_phone" name="guardian_phone" class="form-control" 
+                   placeholder="+91 98765 11111" value="{{ form.guardian_phone if form else '' }}">
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2">
+        <div class="form-group">
+          <label class="form-label" for="password">Create Password *</label>
+          <input type="password" id="password" name="password" class="form-control" 
+                 placeholder="Min 6 characters" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="confirm_password">Confirm Password *</label>
+          <input type="password" id="confirm_password" name="confirm_password" class="form-control" 
+                 placeholder="Re-enter password" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem;">
+        Complete Registration
+      </button>
+    </form>
+
+    <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); font-size: 0.9rem;">
+      <span style="color: var(--text-muted);">Already registered?</span>
+      <a href="{{ url_for('login') }}" style="font-weight: 600; margin-left: 0.35rem;">Sign In Here &rarr;</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

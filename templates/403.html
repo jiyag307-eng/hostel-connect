@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}Access Denied (403) - HostelSphere{% endblock %}
+
+{% block content %}
+<div class="card" style="text-align: center; max-width: 520px; margin: 3rem auto; padding: 3rem 2rem;">
+  <div style="font-size: 4rem; line-height: 1; margin-bottom: 1rem;">⛔</div>
+  <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Access Forbidden</h1>
+  <p style="color: var(--text-muted); margin-bottom: 1.75rem;">
+    You do not have the required administrative or resident permissions to access this page.
+  </p>
+  <a href="{{ url_for('index') }}" class="btn btn-primary">Return to Safety</a>
+</div>
+{% endblock %}

@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block title %}Rooms & Allotment - HostelSphere Admin{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1>🛏️ Rooms & Bed Allotment</h1>
+    <p style="color: var(--text-muted); margin: 0;">
+      Maintain room inventory, track occupancy rates, allocate residents to beds, and free rooms.
+    </p>
+  </div>
+</div>
+
+<!-- Two-Column Layout: Allotment & Add Room on Left, Room Directory on Right -->
+<div class="grid grid-cols-3" style="margin-bottom: 2rem;">
+  <!-- Left Side: Quick Allotment & Add Room -->
+  <div>
+    <!-- Allot Student to Room Card -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <h3 style="margin-bottom: 1rem;">Allocate Student to Room</h3>
+
+      <form method="POST" action="{{ url_for('admin_allot_room') }}">
+        <div class="form-group">
+          <label class="form-label" for="student_id">Select Unallotted Student *</label>
+          <select id="student_id" name="student_id" class="form-select" required>
+            <option value="">-- Choose Student --</option>
+            {% for s in unallocated_students %}
+              <option value="{{ s.id }}">
+                {{ s.full_name }} ({{ s.username }} - {{ s.branch }})
+              </option>
+            {% endfor %}
+          </select>
+          {% if not unallocated_students %}
+            <div class="form-hint" style="color: var(--success-dark);">All registered students currently have active rooms!</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="room_id">Select Room *</label>
+          <select id="room_id" name="room_id" class="form-select" required>
+            <option value="">-- Choose Target Room --</option>
+            {% for r in rooms %}
+              {% if r.current_occupancy < r.capacity and r.status != 'Maintenance' %}
+                <option value="{{ r.id }}">
+                  {{ r.room_number }} ({{ r.block }}, Floor {{ r.floor }}) - {{ r.current_occupancy }}/{{ r.capacity }} Beds
+                </option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="bed_number">Bed Number</label>
+          <select id="bed_number" name="bed_number" class="form-select">
+            <option value="1">Bed 1</option>
+            <option value="2">Bed 2</option>
+            <option value="3">Bed 3</option>
+            <option value="4">Bed 4</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;" {% if not unallocated_students %}disabled{% endif %}>
+          Confirm Allotment
+        </button>
+      </form>
+    </div>
+
+    <!-- Add New Room Card -->
+    <div class="card">
+      <h3 style="margin-bottom: 1rem;">Add New Room to Inventory</h3>
+
+      <form method="POST" action="{{ url_for('admin_rooms') }}">
+        <input type="hidden" name="action" value="add_room">
+
+        <div class="grid grid-cols-2">
+          <div class="form-group">
+            <label class="form-label" for="room_number">Room Number *</label>
+            <input type="text" id="room_number" name="room_number" class="form-control" placeholder="e.g. A-301" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="block">Block / Wing *</label>
+            <input type="text" id="block" name="block" class="form-control" placeholder="e.g. Block A" required>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3">
+          <div class="form-group">
+            <label class="form-label" for="floor">Floor</label>
+            <input type="number" id="floor" name="floor" class="form-control" value="1" min="0" max="10">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="capacity">Beds</label>
+            <input type="number" id="capacity" name="capacity" class="form-control" value="2" min="1" max="6">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="room_type">Type</label>
+            <select id="room_type" name="room_type" class="form-select">
+              <option value="Non-AC">Non-AC</option>
+              <option value="AC">AC</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="monthly_rent">Monthly Rent (₹)</label>
+          <input type="number" id="monthly_rent" name="monthly_rent" class="form-control" value="4500" step="100">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="description">Room Description</label>
+          <input type="text" id="description" name="description" class="form-control" placeholder="e.g. Double seater with garden view">
+        </div>
+
+        <button type="submit" class="btn btn-secondary" style="width: 100%;">
+          Add Room
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Right Side: Rooms Directory & Current Occupants -->
+  <div style="grid-column: span 2;">
+    <!-- Filter by Block -->
+    <div class="card" style="padding: 1rem; margin-bottom: 1.25rem;">
+      <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Filter Block:</span>
+          <a href="{{ url_for('admin_rooms', block='All') }}" 
+             class="btn btn-sm {% if selected_block == 'All' %}btn-primary{% else %}btn-secondary{% endif %}">
+            All Blocks
+          </a>
+          {% for b in blocks %}
+            <a href="{{ url_for('admin_rooms', block=b) }}" 
+               class="btn btn-sm {% if selected_block == b %}btn-primary{% else %}btn-secondary{% endif %}">
+              {{ b }}
+            </a>
+          {% endfor %}
+        </div>
+
+        <span style="font-size: 0.85rem; color: var(--text-muted);">
+          Total <strong>{{ rooms|length }}</strong> Rooms Listed
+        </span>
+      </div>
+    </div>
+
+    <!-- Rooms List with Occupant Badges -->
+    <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+      {% for r in rooms %}
+        <div class="card" style="margin-bottom: 0;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.85rem; gap: 1rem; flex-wrap: wrap;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <h3 style="font-size: 1.25rem; margin: 0; color: #0f172a;">Room {{ r.room_number }}</h3>
+                <span class="badge badge-cat-general">{{ r.block }} &bull; Floor {{ r.floor }}</span>
+                <span class="badge badge-{{ 'available' if r.current_occupancy < r.capacity else 'occupied' }}">
+                  {{ r.current_occupancy }} / {{ r.capacity }} Beds Filled
+                </span>
+                <span class="badge badge-in-progress">{{ r.room_type }}</span>
+              </div>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">
+                ₹{{ "%.0f"|format(r.monthly_rent) }}/month &bull; {{ r.description or 'Standard student accommodation.' }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Current Occupants in this Room -->
+          {% set occupants = room_occupants.get(r.id, []) %}
+          {% if occupants %}
+            <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.85rem;">
+              <h5 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem; letter-spacing: 0.5px;">
+                Current Occupants
+              </h5>
+              <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                {% for occ in occupants %}
+                  <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                      <span class="badge badge-pending">Bed #{{ occ.bed_number }}</span>
+                      <strong>{{ occ.full_name }}</strong>
+                      <span style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">({{ occ.roll_number }})</span>
+                      <span style="font-size: 0.8rem; color: var(--secondary);">📞 {{ occ.phone }}</span>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('admin_deallot_room', allotment_id=occ.allotment_id) }}" onsubmit="return confirm('Deallocate {{ occ.full_name }} from Room {{ r.room_number }}?');">
+                      <button type="submit" class="btn btn-sm btn-outline" style="color: var(--danger); border-color: #fca5a5; padding: 0.2rem 0.5rem; font-size: 0.75rem;">
+                        Deallocate
+                      </button>
+                    </form>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% else %}
+            <div style="background: #f8fafc; padding: 0.65rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--text-muted);">
+              No students currently allotted to this room. All beds vacant.
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

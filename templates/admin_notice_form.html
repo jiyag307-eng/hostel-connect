@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if notice %}Edit Notice #{{ notice.id }}{% else %}Publish New Notice{% endif %} - HostelSphere{% endblock %}
+
+{% block content %}
+<div style="max-width: 680px; margin: 1.5rem auto;">
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{{ url_for('admin_notices') }}" style="color: var(--secondary); font-size: 0.875rem;">&larr; Back to Notices</a>
+    <h1 style="margin-top: 0.5rem;">{% if notice %}Edit Notice{% else %}Publish New Announcement{% endif %}</h1>
+  </div>
+
+  <div class="card" style="padding: 2rem;">
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label" for="title">Notice Title *</label>
+        <input type="text" id="title" name="title" class="form-control" 
+               value="{{ notice.title if notice else '' }}" placeholder="e.g. Wi-Fi Maintenance Schedule or Curfew Policy" required autofocus>
+      </div>
+
+      <div class="grid grid-cols-2">
+        <div class="form-group">
+          <label class="form-label" for="category">Notice Category *</label>
+          <select id="category" name="category" class="form-select">
+            {% for cat in ['General', 'Urgent', 'Mess', 'Event', 'Maintenance', 'Rules'] %}
+              <option value="{{ cat }}" {% if notice and notice.category == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; margin-top: 1.75rem;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
+            <input type="checkbox" name="is_pinned" value="1" {% if notice and notice.is_pinned %}checked{% endif %} style="width: 1.15rem; height: 1.15rem;">
+            <span>Pin this notice to top of board</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="content">Announcement Content *</label>
+        <textarea id="content" name="content" class="form-control" rows="8" 
+                  placeholder="Provide full announcement details, timings, guidelines, and instructions..." required style="min-height: 180px;">{{ notice.content if notice else '' }}</textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+        <a href="{{ url_for('admin_notices') }}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+          {% if notice %}Save Changes{% else %}Publish Notice{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

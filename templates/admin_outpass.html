@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Outpass Approvals - HostelSphere Admin{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1>🎫 Gate Outpass Approvals</h1>
+    <p style="color: var(--text-muted); margin: 0;">
+      Verify parental consents, authorize leave requests, and log student return timestamps.
+    </p>
+  </div>
+</div>
+
+<!-- Status Filters -->
+<div class="card" style="padding: 1rem; margin-bottom: 1.5rem;">
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-right: 0.25rem;">Filter Status:</span>
+    {% for s in ['Pending', 'Approved', 'Returned', 'Rejected', 'All'] %}
+      <a href="{{ url_for('admin_outpass', status=s) }}" 
+         class="btn btn-sm {% if selected_status == s %}btn-primary{% else %}btn-secondary{% endif %}">
+        {{ s }}
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Outpass List -->
+<div class="card">
+  {% if outpasses %}
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      {% for o in outpasses %}
+        <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; background: white; box-shadow: var(--shadow-sm); {% if o.status == 'Pending' %}border-left: 4px solid var(--warning);{% elif o.status == 'Approved' %}border-left: 4px solid var(--success);{% endif %}">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; gap: 1rem; flex-wrap: wrap;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
+                <h3 style="font-size: 1.15rem; margin: 0;">{{ o.student_name }}</h3>
+                <span class="badge badge-{{ o.status|lower }}">{{ o.status }}</span>
+                <span style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace;">Roll: {{ o.roll_number }}</span>
+                <span class="badge badge-available">Room: {{ o.room_number or 'N/A' }}</span>
+              </div>
+              <div style="font-size: 0.825rem; color: var(--text-muted);">
+                Student Phone: <a href="tel:{{ o.student_phone }}">{{ o.student_phone or 'N/A' }}</a> &bull;
+                Guardian: <strong>{{ o.guardian_name or 'N/A' }}</strong> (<a href="tel:{{ o.emergency_contact }}">{{ o.emergency_contact }}</a>) &bull;
+                Applied {{ o.created_at|format_datetime }}
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              {% if o.status == 'Approved' %}
+                <a href="{{ url_for('view_gate_pass', outpass_id=o.id) }}" class="btn btn-sm btn-outline" target="_blank">
+                  📄 Gate Pass
+                </a>
+                <form method="POST" action="{{ url_for('admin_mark_returned', outpass_id=o.id) }}">
+                  <button type="submit" class="btn btn-sm btn-secondary" onclick="return confirm('Record student return to campus?');">
+                    📥 Mark Returned
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Leave Details Grid -->
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; background: #f8fafc; padding: 0.85rem 1rem; border-radius: var(--radius-sm); margin-bottom: 0.85rem;">
+            <div>
+              <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; display: block;">Destination</span>
+              <strong style="color: #1e293b; font-size: 0.95rem;">{{ o.destination }}</strong>
+            </div>
+
+            <div>
+              <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; display: block;">Departure Window</span>
+              <span style="font-size: 0.875rem; color: #1e40af; font-weight: 600;">{{ o.departure_time|format_datetime }}</span>
+            </div>
+
+            <div>
+              <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; display: block;">Expected Return</span>
+              <span style="font-size: 0.875rem; color: #b91c1c; font-weight: 600;">{{ o.expected_return|format_datetime }}</span>
+            </div>
+          </div>
+
+          <p style="font-size: 0.9rem; color: #334155; margin-bottom: 0.75rem;">
+            <strong>Reason for Leave:</strong> {{ o.reason }}
+          </p>
+
+          <!-- Review Form for Pending Requests -->
+          {% if o.status == 'Pending' %}
+            <form method="POST" action="{{ url_for('admin_review_outpass', outpass_id=o.id) }}" style="background: #fafafa; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.85rem; margin-top: 0.75rem;">
+              <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                <input type="text" name="admin_remarks" class="form-control" style="flex: 1; min-width: 250px;" 
+                       placeholder="Warden notes (e.g. Parental consent verified over phone)..." value="Parental consent verified. Approved.">
+                
+                <button type="submit" name="decision" value="Approved" class="btn btn-sm btn-success">
+                  ✓ Approve Outpass
+                </button>
+                <button type="submit" name="decision" value="Rejected" class="btn btn-sm btn-danger">
+                  ✕ Reject
+                </button>
+              </div>
+            </form>
+          {% elif o.admin_remarks %}
+            <div style="font-size: 0.85rem; padding: 0.5rem 0.75rem; background: #eff6ff; border-radius: var(--radius-sm); color: #1e40af;">
+              <strong>Warden Remarks:</strong> {{ o.admin_remarks }}
+              {% if o.reviewed_by %}
+                <span style="color: var(--text-muted);">&bull; Approved by {{ o.reviewer_name }}</span>
+              {% endif %}
+              {% if o.actual_return %}
+                <span style="color: #047857; margin-left: 0.5rem;">&bull; Returned on {{ o.actual_return|format_datetime }}</span>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p style="text-align: center; color: var(--text-muted); padding: 3rem 0; margin: 0;">
+      No outpass records found with status "{{ selected_status }}".
+    </p>
+  {% endif %}
+</div>
+{% endblock %}

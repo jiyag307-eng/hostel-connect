@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}Administrator Dashboard - HostelSphere{% endblock %}
+
+{% block content %}
+<!-- Admin Header -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 1.85rem; margin-bottom: 0.25rem;">Hostel Administration Console 🛡️</h1>
+    <p style="color: var(--text-muted); margin: 0; font-size: 0.95rem;">
+      Welcome, <strong>{{ current_user.full_name }}</strong> &bull; Complete operational control over facilities, students, and requests.
+    </p>
+  </div>
+
+  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+    <a href="{{ url_for('admin_new_notice') }}" class="btn btn-primary">+ Post Notice</a>
+    <a href="{{ url_for('admin_rooms') }}" class="btn btn-secondary">🛏️ Allot Room</a>
+    <a href="{{ url_for('admin_outpass') }}" class="btn btn-outline">🎫 Review Passes</a>
+  </div>
+</div>
+
+<!-- Executive Stats Grid -->
+<div class="grid grid-cols-4" style="margin-bottom: 2rem;">
+  <div class="stat-card">
+    <div class="stat-icon blue">🎓</div>
+    <div>
+      <div class="stat-val">{{ stats.total_students }}</div>
+      <div class="stat-lbl">Registered Students</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon purple">🏢</div>
+    <div>
+      <div class="stat-val">{{ stats.occupancy_pct }}%</div>
+      <div class="stat-lbl">{{ stats.occupied_beds }} / {{ stats.total_capacity }} Beds Occupied</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon red">🛠️</div>
+    <div>
+      <div class="stat-val">{{ stats.pending_complaints }}</div>
+      <div class="stat-lbl">Pending Maintenance Tickets</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon amber">🎫</div>
+    <div>
+      <div class="stat-val">{{ stats.pending_outpasses }}</div>
+      <div class="stat-lbl">Pending Outpass Requests</div>
+    </div>
+  </div>
+</div>
+
+<!-- Two-Column Workbench: Pending Approvals & Complaints -->
+<div class="grid grid-cols-2">
+  <!-- Pending Outpass Applications -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <span>🎫</span>
+        <span>Pending Gate Outpasses ({{ stats.pending_outpasses }})</span>
+      </div>
+      <a href="{{ url_for('admin_outpass') }}" class="btn btn-sm btn-outline">All Requests &rarr;</a>
+    </div>
+
+    {% if recent_outpasses %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Destination / Reason</th>
+              <th>Departure</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in recent_outpasses %}
+              <tr>
+                <td>
+                  <strong>{{ o.student_name }}</strong>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">
+                    Roll: {{ o.roll_number }} &bull; Room: {{ o.room_number or 'N/A' }}
+                  </div>
+                </td>
+                <td>
+                  <strong>{{ o.destination }}</strong>
+                  <div style="font-size: 0.75rem; color: var(--text-muted); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    {{ o.reason }}
+                  </div>
+                </td>
+                <td style="font-size: 0.8rem; white-space: nowrap;">
+                  {{ o.departure_time|format_datetime('%d %b, %I:%M %p') }}
+                </td>
+                <td>
+                  <form method="POST" action="{{ url_for('admin_review_outpass', outpass_id=o.id) }}" style="display: flex; gap: 0.35rem;">
+                    <input type="hidden" name="admin_remarks" value="Approved by Chief Warden Office.">
+                    <button type="submit" name="decision" value="Approved" class="btn btn-sm btn-success" title="Approve Outpass">✓</button>
+                    <button type="submit" name="decision" value="Rejected" class="btn btn-sm btn-danger" title="Reject Outpass">✕</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); text-align: center; padding: 2rem 0; margin: 0;">
+        No pending outpasses requiring action. All clear! ✨
+      </p>
+    {% endif %}
+  </div>
+
+  <!-- Critical Maintenance Complaints -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <span>🛠️</span>
+        <span>High Priority Maintenance</span>
+      </div>
+      <a href="{{ url_for('admin_complaints') }}" class="btn btn-sm btn-outline">Manage Tickets &rarr;</a>
+    </div>
+
+    {% if recent_complaints %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Issue & Location</th>
+              <th>Student</th>
+              <th>Priority</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in recent_complaints %}
+              <tr>
+                <td>
+                  <strong>{{ c.title }}</strong>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">
+                    📍 Room {{ c.room_number or 'Common' }} &bull; {{ c.category }}
+                  </div>
+                </td>
+                <td style="font-size: 0.825rem;">
+                  {{ c.student_name }}
+                </td>
+                <td>
+                  <span class="badge badge-priority-{{ c.priority|lower }}">{{ c.priority }}</span>
+                </td>
+                <td>
+                  <span class="badge badge-{{ c.status|lower|replace(' ', '-') }}">{{ c.status }}</span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); text-align: center; padding: 2rem 0; margin: 0;">
+        No maintenance complaints currently reported.
+      </p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

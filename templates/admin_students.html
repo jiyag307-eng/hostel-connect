@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Directory - HostelSphere Admin{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1>🎓 Registered Student Directory</h1>
+    <p style="color: var(--text-muted); margin: 0;">
+      Resident student roster with academic branch, room allocation, and guardian emergency contacts.
+    </p>
+  </div>
+
+  <span class="badge badge-approved" style="font-size: 0.9rem; padding: 0.4rem 0.85rem;">
+    {{ students|length }} Active Residents
+  </span>
+</div>
+
+<!-- Search Bar -->
+<div class="card" style="padding: 1rem; margin-bottom: 1.5rem;">
+  <form method="GET" action="{{ url_for('admin_students') }}" style="display: flex; gap: 0.75rem; align-items: center; max-width: 500px;">
+    <input type="text" name="search" class="form-control" placeholder="Search by roll number, name, or branch..." value="{{ search }}">
+    <button type="submit" class="btn btn-secondary btn-sm">Search</button>
+    {% if search %}
+      <a href="{{ url_for('admin_students') }}" class="btn btn-outline btn-sm">Reset</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Students Directory Table -->
+<div class="card">
+  {% if students %}
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Roll Number</th>
+            <th>Student Name</th>
+            <th>Branch & Sem</th>
+            <th>Room Allocation</th>
+            <th>Student Phone & Email</th>
+            <th>Guardian Contact</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in students %}
+            <tr>
+              <td style="font-family: monospace; font-weight: 700; color: var(--primary);">
+                {{ s.username }}
+              </td>
+              <td>
+                <strong>{{ s.full_name }}</strong>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">{{ s.gender or 'N/A' }}</div>
+              </td>
+              <td style="font-size: 0.85rem;">
+                {{ s.branch }}
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Semester {{ s.semester }}</div>
+              </td>
+              <td>
+                {% if s.room_number %}
+                  <span class="badge badge-available">
+                    {{ s.room_number }} (Bed #{{ s.bed_number }})
+                  </span>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">{{ s.block }}</div>
+                {% else %}
+                  <span class="badge badge-pending">Unallocated</span>
+                {% endif %}
+              </td>
+              <td style="font-size: 0.85rem;">
+                <div><a href="tel:{{ s.phone }}">{{ s.phone or 'No phone' }}</a></div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);"><a href="mailto:{{ s.email }}">{{ s.email }}</a></div>
+              </td>
+              <td style="font-size: 0.85rem;">
+                <div><strong>{{ s.guardian_name or 'N/A' }}</strong></div>
+                {% if s.guardian_phone %}
+                  <div style="font-size: 0.775rem;"><a href="tel:{{ s.guardian_phone }}">📞 {{ s.guardian_phone }}</a></div>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p style="text-align: center; color: var(--text-muted); padding: 3rem 0; margin: 0;">
+      No student records found.
+    </p>
+  {% endif %}
+</div>
+{% endblock %}

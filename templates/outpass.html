@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Gate Outpass Workflow - HostelSphere{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1>🎫 Digital Leave & Gate Outpass</h1>
+    <p style="color: var(--text-muted); margin: 0;">
+      Submit leave requests for warden approval and generate digital security passes.
+    </p>
+  </div>
+</div>
+
+<div class="grid grid-cols-3">
+  <!-- Apply for Outpass Form -->
+  <div>
+    <div class="card" style="position: sticky; top: 5.5rem;">
+      <h3 style="margin-bottom: 1.25rem;">Apply for Outpass</h3>
+
+      <form method="POST" action="{{ url_for('student_outpass') }}">
+        <div class="form-group">
+          <label class="form-label" for="departure_time">Departure Date & Time *</label>
+          <input type="datetime-local" id="departure_time" name="departure_time" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="expected_return">Expected Return Date & Time *</label>
+          <input type="datetime-local" id="expected_return" name="expected_return" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="destination">Destination / City *</label>
+          <input type="text" id="destination" name="destination" class="form-control" 
+                 placeholder="e.g. Home, Delhi, or DTU Campus" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="emergency_contact">Emergency / Guardian Phone *</label>
+          <input type="tel" id="emergency_contact" name="emergency_contact" class="form-control" 
+                 value="{{ user.guardian_phone or user.phone or '' }}" placeholder="+91 98765 00000" required>
+          <div class="form-hint">Warden will verify with this contact for overnight leave.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reason">Detailed Reason for Leave *</label>
+          <textarea id="reason" name="reason" class="form-control" 
+                    placeholder="e.g. Visiting hometown for sibling's wedding / Academic workshop..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+          Submit Outpass Application
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Outpass History & Active Passes -->
+  <div style="grid-column: span 2;">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <span>📜</span>
+          <span>Outpass Records</span>
+        </div>
+        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">
+          {{ outpasses|length }} Applications
+        </span>
+      </div>
+
+      {% if outpasses %}
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+          {% for o in outpasses %}
+            <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; background: white; box-shadow: var(--shadow-sm); {% if o.status == 'Approved' %}border-left: 4px solid var(--success);{% elif o.status == 'Pending' %}border-left: 4px solid var(--warning);{% endif %}">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; gap: 1rem;">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                    <h3 style="font-size: 1.15rem; margin: 0;">{{ o.destination }}</h3>
+                    <span class="badge badge-{{ o.status|lower }}">{{ o.status }}</span>
+                  </div>
+                  <div style="font-size: 0.825rem; color: var(--text-muted);">
+                    Applied on {{ o.created_at|format_datetime }}
+                  </div>
+                </div>
+
+                {% if o.status == 'Approved' %}
+                  <a href="{{ url_for('view_gate_pass', outpass_id=o.id) }}" class="btn btn-sm btn-success" target="_blank">
+                    📄 Print Gate Pass
+                  </a>
+                {% endif %}
+              </div>
+
+              <!-- Departure & Return Timing Pill -->
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; background: #f8fafc; padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem;">
+                <div>
+                  <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; display: block;">Departure</span>
+                  <strong style="color: #1e293b; font-size: 0.9rem;">{{ o.departure_time|format_datetime }}</strong>
+                </div>
+                <div>
+                  <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; display: block;">Expected Return</span>
+                  <strong style="color: #1e293b; font-size: 0.9rem;">{{ o.expected_return|format_datetime }}</strong>
+                </div>
+              </div>
+
+              <p style="font-size: 0.9rem; color: #475569; margin-bottom: 0.5rem;">
+                <strong>Reason:</strong> {{ o.reason }}
+              </p>
+
+              {% if o.admin_remarks %}
+                <div style="font-size: 0.85rem; padding: 0.5rem 0.75rem; background: #eff6ff; border-radius: var(--radius-sm); color: #1e40af; margin-top: 0.5rem;">
+                  <strong>Warden Note:</strong> {{ o.admin_remarks }}
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 3rem 1rem;">
+          <div style="font-size: 3rem; margin-bottom: 0.75rem;">🎫</div>
+          <h3>No Outpass Requests</h3>
+          <p style="color: var(--text-muted); max-width: 400px; margin: 0 auto;">
+            Need to leave campus for the weekend or an official event? Fill out the application on the left.
+          </p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

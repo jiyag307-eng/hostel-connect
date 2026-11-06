@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Weekly Mess Menu - HostelSphere{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1>🍲 Weekly Mess Schedule</h1>
+    <p style="color: var(--text-muted); margin: 0;">
+      Nutritious, hygienic, 4-time dining menu updated weekly by the Mess Committee.
+    </p>
+  </div>
+
+  {% if current_user and current_user.role == 'admin' %}
+    <a href="{{ url_for('admin_mess', day=selected_day) }}" class="btn btn-primary">
+      ✏️ Edit {{ selected_day }} Menu
+    </a>
+  {% endif %}
+</div>
+
+<!-- Day of Week Tabs -->
+<div class="day-tabs">
+  {% for day in days_of_week %}
+    <a href="{{ url_for('mess_menu', day=day) }}" 
+       class="day-tab {% if selected_day == day %}active{% endif %}">
+      {{ day }}
+      {% if day == today_name %}
+        <span style="font-size: 0.7rem; background: rgba(0,0,0,0.15); padding: 0.1rem 0.4rem; border-radius: var(--radius-full); margin-left: 0.25rem;">Today</span>
+      {% endif %}
+    </a>
+  {% endfor %}
+</div>
+
+<!-- 4 Meals Grid -->
+<div class="card" style="padding: 2rem; margin-bottom: 2rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+    <div>
+      <h2 style="font-size: 1.5rem; margin: 0; color: #0f172a;">Menu for {{ selected_day }}</h2>
+      <span style="font-size: 0.85rem; color: var(--text-muted);">Serving 4 hot & fresh meals daily</span>
+    </div>
+
+    {% if selected_day == today_name %}
+      <span class="badge badge-approved" style="font-size: 0.85rem; padding: 0.4rem 0.85rem;">
+        🟢 Active Serving Today
+      </span>
+    {% endif %}
+  </div>
+
+  {% if meals %}
+    <div class="grid grid-cols-4">
+      {% for m in meals %}
+        <div class="meal-card" style="border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.25rem; background: #fafafa;">
+          <div style="margin-bottom: 0.75rem;">
+            <span class="meal-badge meal-{{ m.meal_type|lower }}">{{ m.meal_type }}</span>
+            <div class="meal-time">
+              ⏰ {{ m.timings }}
+            </div>
+          </div>
+
+          <div style="flex: 1; margin-bottom: 1rem;">
+            <h4 style="font-size: 0.95rem; color: #1e293b; line-height: 1.5; font-weight: 500;">
+              {{ m.items }}
+            </h4>
+          </div>
+
+          {% if m.special_note %}
+            <div style="border-top: 1px dashed var(--border-color); padding-top: 0.5rem; font-size: 0.775rem; color: var(--primary);">
+              ✨ {{ m.special_note }}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p style="text-align: center; color: var(--text-muted); padding: 2rem 0;">
+      No menu items configured for {{ selected_day }}.
+    </p>
+  {% endif %}
+</div>
+
+<!-- Mess Timings & Rules Information Box -->
+<div class="card" style="background: #f8fafc; border: 1px solid var(--border-color);">
+  <h3 style="margin-bottom: 0.75rem; font-size: 1.1rem;">Dining Hall Guidelines & Timings</h3>
+  <div class="grid grid-cols-3" style="font-size: 0.875rem; color: #475569;">
+    <div>
+      <strong>🍳 Breakfast: 07:30 AM – 09:30 AM</strong>
+      <p style="margin-top: 0.25rem; font-size: 0.8rem; color: var(--text-muted);">
+        Tea, coffee, and milk served alongside hot breakfast items.
+      </p>
+    </div>
+    <div>
+      <strong>🍛 Lunch: 12:30 PM – 02:30 PM</strong>
+      <p style="margin-top: 0.25rem; font-size: 0.8rem; color: var(--text-muted);">
+        Fresh salads, curd / raita, and seasonal vegetable preparations.
+      </p>
+    </div>
+    <div>
+      <strong>🌙 Dinner: 07:45 PM – 09:45 PM</strong>
+      <p style="margin-top: 0.25rem; font-size: 0.8rem; color: var(--text-muted);">
+        Evening dining closes promptly at 09:45 PM. Dessert served on selected nights.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

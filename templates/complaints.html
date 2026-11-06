@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Maintenance & Complaints - HostelSphere{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1>🛠️ Maintenance & Complaints</h1>
+    <p style="color: var(--text-muted); margin: 0;">
+      Lodge and track hostel maintenance issues directly with the administration and staff.
+    </p>
+  </div>
+</div>
+
+<div class="grid grid-cols-3">
+  <!-- Lodge Complaint Form (1 column on desktop) -->
+  <div>
+    <div class="card" style="position: sticky; top: 5.5rem;">
+      <h3 style="margin-bottom: 1.25rem;">Submit New Ticket</h3>
+
+      <form method="POST" action="{{ url_for('student_complaints') }}">
+        <div class="form-group">
+          <label class="form-label" for="category">Category *</label>
+          <select id="category" name="category" class="form-select" required>
+            <option value="Plumbing">Plumbing / Water Supply</option>
+            <option value="Electrical">Electrical / Appliances</option>
+            <option value="WiFi">Wi-Fi & Internet</option>
+            <option value="Furniture">Furniture & Fixtures</option>
+            <option value="Cleanliness">Cleanliness & Hygiene</option>
+            <option value="Other">Other Issues</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="room_number">Room / Location</label>
+          <input type="text" id="room_number" name="room_number" class="form-control" 
+                 value="{{ default_room }}" placeholder="e.g. A-101 or Common Hall" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="priority">Priority Level</label>
+          <select id="priority" name="priority" class="form-select">
+            <option value="Low">Low (Routine)</option>
+            <option value="Medium" selected>Medium (Standard)</option>
+            <option value="High">High (Urgent Attention)</option>
+            <option value="Urgent">Emergency / Critical</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="title">Issue Summary *</label>
+          <input type="text" id="title" name="title" class="form-control" 
+                 placeholder="Brief title of the problem" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="description">Detailed Description *</label>
+          <textarea id="description" name="description" class="form-control" 
+                    placeholder="Provide specific details to help the technician identify and fix the issue..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+          Submit Ticket
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Complaints History List (2 columns on desktop) -->
+  <div style="grid-column: span 2;">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <span>📋</span>
+          <span>My Maintenance History</span>
+        </div>
+        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">
+          {{ complaints|length }} Total Tickets
+        </span>
+      </div>
+
+      {% if complaints %}
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+          {% for c in complaints %}
+            <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; background: white; box-shadow: var(--shadow-sm);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; gap: 0.75rem;">
+                <div>
+                  <h3 style="font-size: 1.1rem; margin-bottom: 0.25rem;">{{ c.title }}</h3>
+                  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; font-size: 0.8rem; color: var(--text-muted);">
+                    <span>📍 Room: <strong>{{ c.room_number or 'Not specified' }}</strong></span>
+                    <span>&bull;</span>
+                    <span>📂 {{ c.category }}</span>
+                    <span>&bull;</span>
+                    <span>Submitted {{ c.created_at|format_datetime }}</span>
+                  </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                  <span class="badge badge-{{ c.status|lower|replace(' ', '-') }}">{{ c.status }}</span>
+                  <span class="badge badge-priority-{{ c.priority|lower }}">Priority: {{ c.priority }}</span>
+                </div>
+              </div>
+
+              <p style="font-size: 0.925rem; color: #334155; margin-bottom: 0.75rem; background: #f8fafc; padding: 0.75rem; border-radius: var(--radius-sm);">
+                {{ c.description }}
+              </p>
+
+              {% if c.admin_remarks %}
+                <div style="background: #eff6ff; border-left: 3px solid var(--primary); padding: 0.75rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: 0.875rem;">
+                  <strong style="color: var(--primary);">Hostel Administration Update:</strong>
+                  <p style="margin: 0.25rem 0 0 0; color: #1e3a8a;">{{ c.admin_remarks }}</p>
+                  {% if c.resolved_at %}
+                    <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Resolved on {{ c.resolved_at|format_datetime }}</small>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 3rem 1rem;">
+          <div style="font-size: 3rem; margin-bottom: 0.75rem;">🛠️</div>
+          <h3>No Maintenance Complaints</h3>
+          <p style="color: var(--text-muted); max-width: 400px; margin: 0 auto;">
+            You have not registered any maintenance complaints yet. Submit the form on the left if anything needs repair.
+          </p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

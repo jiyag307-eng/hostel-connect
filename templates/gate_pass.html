@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hostel Gate Pass - #{{ "%05d"|format(outpass.id) }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body {
+      background-color: #f1f5f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen Actions Bar -->
+  <div class="no-print" style="max-width: 600px; width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <a href="{{ url_for('student_outpass') }}" class="btn btn-secondary btn-sm">&larr; Back to Portal</a>
+    <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Print / Save PDF</button>
+  </div>
+
+  <!-- Printable Gate Pass Card -->
+  <div class="gatepass-container">
+    <div class="gatepass-header">
+      <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #64748b;">
+        HostelSphere Security Division
+      </div>
+      <h2 style="margin: 0.25rem 0 0.25rem 0; font-size: 1.5rem; color: #0f172a;">Official Resident Gate Pass</h2>
+      <div class="gatepass-id">PASS-{{ "%04d"|format(outpass.id) }}-{{ current_year }}</div>
+    </div>
+
+    <!-- Approval Stamp Indicator -->
+    <div style="text-align: center; margin-bottom: 1.5rem;">
+      {% if outpass.status == 'Approved' %}
+        <span class="gatepass-stamp">VERIFIED & APPROVED</span>
+      {% elif outpass.status == 'Returned' %}
+        <span class="gatepass-stamp" style="border-color: #475569; color: #475569;">RETURN LOGGED</span>
+      {% else %}
+        <span class="gatepass-stamp" style="border-color: #ef4444; color: #ef4444;">{{ outpass.status }}</span>
+      {% endif %}
+    </div>
+
+    <div class="gatepass-details">
+      <div class="gatepass-item">
+        <label>Student Name</label>
+        <span>{{ outpass.full_name }}</span>
+      </div>
+
+      <div class="gatepass-item">
+        <label>University Roll No.</label>
+        <span>{{ outpass.roll_number }}</span>
+      </div>
+
+      <div class="gatepass-item">
+        <label>Hostel Room Allotment</label>
+        <span>{{ outpass.room_number or 'N/A' }} ({{ outpass.block or 'Campus' }})</span>
+      </div>
+
+      <div class="gatepass-item">
+        <label>Department / Branch</label>
+        <span>{{ outpass.branch or 'Engineering' }}</span>
+      </div>
+
+      <div class="gatepass-item">
+        <label>Permitted Departure</label>
+        <span style="color: #1e40af;">{{ outpass.departure_time|format_datetime }}</span>
+      </div>
+
+      <div class="gatepass-item">
+        <label>Expected Return Deadline</label>
+        <span style="color: #b91c1c;">{{ outpass.expected_return|format_datetime }}</span>
+      </div>
+
+      <div class="gatepass-item" style="grid-column: span 2;">
+        <label>Approved Destination</label>
+        <span>{{ outpass.destination }}</span>
+      </div>
+
+      <div class="gatepass-item" style="grid-column: span 2;">
+        <label>Purpose of Travel</label>
+        <span style="font-weight: 500; font-size: 0.9rem;">{{ outpass.reason }}</span>
+      </div>
+
+      <div class="gatepass-item">
+        <label>Guardian / Emergency Phone</label>
+        <span>{{ outpass.emergency_contact }}</span>
+      </div>
+
+      <div class="gatepass-item">
+        <label>Reviewed & Authorized By</label>
+        <span>{{ outpass.reviewer_name or 'Chief Warden Office' }}</span>
+      </div>
+    </div>
+
+    <!-- Security Checkpoint Instructions -->
+    <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; font-size: 0.775rem; color: #64748b; line-height: 1.4;">
+      <p style="margin-bottom: 0.35rem;">
+        <strong>Notice to Security Guard:</strong> Please verify student university photo ID card before permitting campus exit. Return after expected deadline will be flagged automatically to the Chief Warden.
+      </p>
+      <div style="display: flex; justify-content: space-between; margin-top: 0.75rem; color: #94a3b8;">
+        <span>Generated: {{ outpass.created_at|format_datetime }}</span>
+        <span>Security Check: [ &nbsp; ] Out &nbsp;&nbsp; [ &nbsp; ] In</span>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

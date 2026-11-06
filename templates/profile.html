@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - HostelSphere{% endblock %}
+
+{% block content %}
+<div style="max-width: 680px; margin: 1rem auto;">
+  <div style="margin-bottom: 1.5rem;">
+    <h1>User Profile Settings</h1>
+    <p style="color: var(--text-muted); margin: 0;">
+      Manage your personal contact records and account security credentials.
+    </p>
+  </div>
+
+  <div class="card" style="padding: 2rem;">
+    <!-- Profile Header Info -->
+    <div style="display: flex; align-items: center; gap: 1.25rem; padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
+      <div style="width: 4rem; height: 4rem; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #4338ca); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: 700;">
+        {{ user.full_name[0] }}
+      </div>
+      <div>
+        <h2 style="font-size: 1.35rem; margin-bottom: 0.25rem;">{{ user.full_name }}</h2>
+        <div style="display: flex; gap: 0.5rem; align-items: center; font-size: 0.85rem; color: var(--text-muted);">
+          <span>Username/Roll: <strong>{{ user.username }}</strong></span>
+          <span>&bull;</span>
+          <span class="role-tag {{ user.role }}">{{ user.role }}</span>
+        </div>
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('profile') }}">
+      <div class="grid grid-cols-2">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-control" value="{{ user.email }}" disabled style="background: #f8fafc; cursor: not-allowed;">
+          <div class="form-hint">Official registered email (Contact warden to change)</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="phone">Personal Mobile Number</label>
+          <input type="tel" id="phone" name="phone" class="form-control" 
+                 value="{{ user.phone or '' }}" placeholder="+91 98765 00000">
+        </div>
+      </div>
+
+      {% if user.role == 'student' %}
+        <div class="grid grid-cols-2">
+          <div class="form-group">
+            <label class="form-label" for="guardian_name">Parent / Guardian Name</label>
+            <input type="text" id="guardian_name" name="guardian_name" class="form-control" 
+                   value="{{ user.guardian_name or '' }}" placeholder="Guardian's full name">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="guardian_phone">Guardian Contact Number</label>
+            <input type="tel" id="guardian_phone" name="guardian_phone" class="form-control" 
+                   value="{{ user.guardian_phone or '' }}" placeholder="+91 98765 11111">
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Password Change Section -->
+      <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; margin-top: 1rem; margin-bottom: 1.5rem;">
+        <h4 style="margin-bottom: 0.5rem;">Change Password</h4>
+        <p style="color: var(--text-muted); font-size: 0.825rem; margin-bottom: 1rem;">
+          Leave these blank if you do not wish to change your current password.
+        </p>
+
+        <div class="grid grid-cols-2">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="new_password">New Password</label>
+            <input type="password" id="new_password" name="new_password" class="form-control" 
+                   placeholder="Min 6 characters">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="confirm_password">Confirm New Password</label>
+            <input type="password" id="confirm_password" name="confirm_password" class="form-control" 
+                   placeholder="Re-enter password">
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        Save Profile Updates
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

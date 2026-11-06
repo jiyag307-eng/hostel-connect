@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Notice Board - HostelSphere{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1>📢 Hostel Notice Board</h1>
+    <p style="color: var(--text-muted); margin: 0;">
+      Official administrative circulars, mess notifications, maintenance alerts, and events.
+    </p>
+  </div>
+
+  {% if current_user and current_user.role == 'admin' %}
+    <a href="{{ url_for('admin_new_notice') }}" class="btn btn-primary">+ Post New Notice</a>
+  {% endif %}
+</div>
+
+<!-- Search & Category Filter Bar -->
+<div class="card" style="padding: 1rem; margin-bottom: 2rem;">
+  <form method="GET" action="{{ url_for('notices') }}" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+    <!-- Category Filter Pills -->
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+      <span style="font-size: 0.825rem; font-weight: 600; color: var(--text-muted); margin-right: 0.25rem;">Filter:</span>
+      {% for cat in categories %}
+        <a href="{{ url_for('notices', category=cat, search=search) }}" 
+           class="btn btn-sm {% if selected_category == cat %}btn-primary{% else %}btn-secondary{% endif %}">
+          {{ cat }}
+        </a>
+      {% endfor %}
+    </div>
+
+    <!-- Search Box -->
+    <div style="display: flex; gap: 0.5rem; min-width: 280px;">
+      <input type="text" name="search" class="form-control" placeholder="Search notices by keyword..." value="{{ search }}">
+      <button type="submit" class="btn btn-secondary btn-sm">Search</button>
+      {% if search or selected_category != 'All' %}
+        <a href="{{ url_for('notices') }}" class="btn btn-outline btn-sm">Reset</a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Notices Listing -->
+{% if notices %}
+  <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+    {% for n in notices %}
+      <article class="notice-card {% if n.is_pinned %}pinned{% endif %}">
+        <div class="notice-header">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
+              <h2 style="font-size: 1.3rem; margin: 0; color: #0f172a;">
+                {% if n.is_pinned %}<span title="Pinned to top" style="font-size: 1.1rem;">📌</span>{% endif %}
+                {{ n.title }}
+              </h2>
+              <span class="badge badge-cat-{{ n.category|lower }}">{{ n.category }}</span>
+            </div>
+            <div class="notice-meta">
+              <span>✍️ Posted by <strong>{{ n.author_name }}</strong></span>
+              <span>&bull;</span>
+              <span>🗓️ {{ n.created_at|format_datetime }}</span>
+              <span>&bull;</span>
+              <span>⏱️ {{ n.created_at|time_ago }}</span>
+            </div>
+          </div>
+
+          {% if current_user and current_user.role == 'admin' %}
+            <div style="display: flex; gap: 0.5rem;">
+              <a href="{{ url_for('admin_edit_notice', notice_id=n.id) }}" class="btn btn-sm btn-secondary">Edit</a>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="notice-content">
+          {{ n.content }}
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card" style="text-align: center; padding: 3.5rem 1rem;">
+    <div style="font-size: 3rem; margin-bottom: 0.75rem;">📭</div>
+    <h3>No Announcements Found</h3>
+    <p style="color: var(--text-muted); max-width: 400px; margin: 0 auto 1.5rem auto;">
+      {% if search %}
+        No circulars matched "{{ search }}". Try searching with different terms or reset filters.
+      {% else %}
+        No notices have been published in this category yet.
+      {% endif %}
+    </p>
+    <a href="{{ url_for('notices') }}" class="btn btn-secondary">Clear Filter</a>
+  </div>
+{% endif %}
+{% endblock %}

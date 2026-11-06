@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Page Not Found (404) - HostelSphere{% endblock %}
+
+{% block content %}
+<div class="card" style="text-align: center; max-width: 520px; margin: 3rem auto; padding: 3rem 2rem;">
+  <div style="font-size: 4rem; line-height: 1; margin-bottom: 1rem;">🔍</div>
+  <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Page Not Found</h1>
+  <p style="color: var(--text-muted); margin-bottom: 1.75rem;">
+    The requested hostel portal page does not exist or has been moved.
+  </p>
+  <div style="display: flex; gap: 0.75rem; justify-content: center;">
+    <a href="{{ url_for('index') }}" class="btn btn-primary">Return Home</a>
+    {% if current_user %}
+      <a href="{{ url_for('student_dashboard' if current_user.role == 'student' else 'admin_dashboard') }}" class="btn btn-secondary">My Dashboard</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
