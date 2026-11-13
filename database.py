@@ -7,8 +7,14 @@ import sqlite3
 import os
 from flask import g
 
-DATABASE = os.path.join(os.path.dirname(__file__), 'hostel.db')
-SCHEMA_PATH = os.path.join(os.path.dirname(__file__), 'schema.sql')
+BASE_DIR = os.path.dirname(__file__)
+SCHEMA_PATH = os.path.join(BASE_DIR, 'schema.sql')
+
+# Vercel serverless has writable /tmp; local dev uses project dir
+if os.environ.get('VERCEL'):
+    DATABASE = '/tmp/hostel.db'
+else:
+    DATABASE = os.path.join(BASE_DIR, 'hostel.db')
 
 
 def get_db():
